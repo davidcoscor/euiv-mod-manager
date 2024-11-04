@@ -219,7 +219,7 @@ class ModCollection(JSONFile):
                  + [self.content['sets'][set_name] for set_name in self.content['sets'].keys()]
             self.delete_mod(mod_name)
         else:
-            locs = [self.content[set_name]]
+            locs = [self.content['sets'][set_name]]
             
         mod_name = self.internal_mod_name(mod_name)
         for loc in locs:
@@ -460,6 +460,7 @@ class ModSets(wx.Panel):
             pos=(20,30),
             size=(200,-1)
         )
+        self.new_set_name_selector.text_ctrl.Bind(wx.EVT_TEXT, self.on_text_edited)
         self.create_set = wx.Button(self, label='Create', pos=(240,30), size=(200,-1))
         self.create_set.Bind(wx.EVT_BUTTON, self.on_create_set)
 
@@ -483,8 +484,8 @@ class ModSets(wx.Panel):
             size=(200,-1)
         )
         
-        self.update_set = wx.Button(self, label='Rename Set', pos=(240,320), size=(90,-1))
-        self.update_set.Bind(wx.EVT_BUTTON, self.on_rename_set)
+        self.rename_set = wx.Button(self, label='Rename Set', pos=(240,320), size=(90,-1))
+        self.rename_set.Bind(wx.EVT_BUTTON, self.on_rename_set)
 
         self.delete_set = wx.Button(self, label='Delete Set', pos=(350,320), size=(90,-1))
         self.delete_set.Bind(wx.EVT_BUTTON, self.on_delete_set)
@@ -499,20 +500,22 @@ class ModSets(wx.Panel):
             label=f'Currently loaded: {MOD_COLLECTION.get_loaded_set()}', pos=(240,365)
         )
 
-        self._update_button_status()
+        self._update_button_status([self.create_set,self.rename_set,self.load_set,self.unload_set])
     
-    def _update_button_status(self):
-        buttons = [self.update_set,self.delete_set,self.load_set]
+    def _update_button_status(self, buttons):
+        enable_when = {
+            self.rename_set: self.set_list_box.GetStringSelection() != '',
+            self.delete_set: self.set_list_box.GetStringSelection() != '',
+            self.load_set: self.set_list_box.GetStringSelection() != '',
+            self.unload_set: MOD_COLLECTION.get_loaded_set() is not None,
+            self.create_set: self.new_set_name_selector.GetValue() != ''
+        }
+
         for button in buttons:
-            if self.set_list_box.GetStringSelection() == '':  
-                button.Disable()
-            else:
+            if enable_when[button]:
                 button.Enable()
-        
-        if MOD_COLLECTION.get_loaded_set() is None:
-            self.unload_set.Disable()
-        else:
-            self.unload_set.Enable()
+            else:
+                button.Disable()
 
     def update_mod_list_box(self):
         self.selected_set = self.set_list_box.GetStringSelection()
@@ -521,7 +524,10 @@ class ModSets(wx.Panel):
             set_mods = MOD_COLLECTION.get_mods(self.selected_set)
             self.mod_list_box.Set(all_mods)
             self.mod_list_box.SetCheckedStrings(set_mods)
-            self._update_button_status()
+            self._update_button_status([self.rename_set, self.delete_set, self.load_set])
+
+    def on_text_edited(self, event):
+        self._update_button_status([self.create_set])
 
     def on_set_selected(self, event):
         self.update_mod_list_box()
@@ -532,6 +538,9 @@ class ModSets(wx.Panel):
             MOD_COLLECTION.add_mod(mod, set_name=self.selected_set)
         else:
             MOD_COLLECTION.remove_mod(mod, set_name=self.selected_set)
+        
+        if self.selected_set == MOD_COLLECTION.get_loaded_set():
+            MOD_COLLECTION.load_set(self.selected_set)
 
     def on_create_set(self, event):
         set_name = self.new_set_name_selector.GetValue()
@@ -564,17 +573,17 @@ class ModSets(wx.Panel):
         MOD_COLLECTION.delete_set(self.selected_set)
         self.set_list_box.Set(MOD_COLLECTION.get_sets())
         self.mod_list_box.Set([])
-        self._update_button_status()
+        self._update_button_status([self.rename_set, self.delete_set, self.load_set])
 
     def on_load_set(self, event):
         MOD_COLLECTION.load_set(self.selected_set)
         self.loaded_set_text.SetLabelText(f'Currently loaded: {self.selected_set}')
-        self._update_button_status()
+        self._update_button_status([self.unload_set])
     
     def on_unload_set(self, event):
         MOD_COLLECTION.load_set(None)
         self.loaded_set_text.SetLabelText(f'Currently loaded: {None}')
-        self._update_button_status()
+        self._update_button_status([self.unload_set])
 
 
 class SettingsTab(wx.Panel):
