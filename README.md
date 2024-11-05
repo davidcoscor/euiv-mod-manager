@@ -1,5 +1,5 @@
 # EUIV Mod Manager
-A minimal Europa Universalis IV mod manager coded in Python. Created to avoid the cumbersome and tedious process of manually installing mods on Europa Universalis IV.
+A minimal Europa Universalis IV GUI mod manager coded in Python. Created to avoid the cumbersome and tedious process of manually installing mods.
 
 ## How to Install & Run
 Simply download the EUIV_Mod_Manager.exe under bin/dist/ and run it.
@@ -10,4 +10,4 @@ Simply download the EUIV_Mod_Manager.exe under bin/dist/ and run it.
   3. Load mod sets into the game
 
 ## Disclaimer
-I do not own nor create the icon, all its rights belong to Paradox Interactive.
+I did not create and I do not own the icon, all its rights belong to Paradox Interactive.
